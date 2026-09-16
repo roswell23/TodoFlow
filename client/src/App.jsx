@@ -23,13 +23,14 @@ export default function App() {
     return () => window.removeEventListener('popstate', onPop)
   }, [])
 
-  if (loading) return <Loading />
+  // Redirect authenticated users away from auth pages (via effect, not render)
+  useEffect(() => {
+    if (!loading && user && (path === '/login' || path === '/signup')) {
+      navigate('/dashboard')
+    }
+  }, [loading, user, path])
 
-  // Redirect authenticated users away from auth pages
-  if (user && (path === '/login' || path === '/signup')) {
-    navigate('/dashboard')
-    return <Loading message="Redirecting…" />
-  }
+  if (loading) return <Loading />
 
   if (path === '/dashboard') {
     return (

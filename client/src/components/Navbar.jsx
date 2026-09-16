@@ -15,7 +15,8 @@ export default function Navbar({ navigate }) {
   return (
     <header className="topbar">
       <div className="logo">
-        <span>✓</span> TodoFlow
+        <span>✓</span>
+        TodoFlow
       </div>
       {user && (
         <button className="logout-button" onClick={handleLogout}>

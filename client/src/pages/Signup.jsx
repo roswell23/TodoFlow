@@ -1,16 +1,18 @@
 import { useState } from 'react'
 import { authService } from '../services/authService'
 
-function Field({ label, type = 'text', value, onChange, placeholder, autoComplete }) {
+function Field({ id, label, type = 'text', value, onChange, placeholder, autoComplete }) {
   return (
-    <label className="field">
+    <label className="field" htmlFor={id}>
       <span>{label}</span>
       <input
+        id={id}
         type={type}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
         autoComplete={autoComplete}
+        required
       />
     </label>
   )
@@ -26,7 +28,11 @@ export default function Signup({ navigate }) {
   const submit = async (e) => {
     e.preventDefault()
     setError('')
+
+    if (!form.name.trim()) return setError('Please enter your name.')
+    if (form.password.length < 6) return setError('Password must be at least 6 characters.')
     if (form.password !== form.confirmPassword) return setError('Passwords do not match.')
+
     setBusy(true)
     try {
       await authService.signup(form)
@@ -40,7 +46,7 @@ export default function Signup({ navigate }) {
 
   return (
     <main className="auth-layout">
-      <section className="brand-panel">
+      <section className="brand-panel" aria-hidden="true">
         <div className="brand-mark">✓</div>
         <p className="brand-name">TodoFlow</p>
         <h1>Make space for<br /><em>what matters.</em></h1>
@@ -54,9 +60,10 @@ export default function Signup({ navigate }) {
           <h2>Create your account</h2>
           <p className="form-subtitle">A little more focus, a lot less friction.</p>
 
-          <form onSubmit={submit} className="auth-form">
-            {error && <div className="alert">{error}</div>}
+          <form onSubmit={submit} className="auth-form" noValidate>
+            {error && <div className="alert" role="alert">{error}</div>}
             <Field
+              id="signup-name"
               label="Full name"
               value={form.name}
               onChange={update('name')}
@@ -64,6 +71,7 @@ export default function Signup({ navigate }) {
               autoComplete="name"
             />
             <Field
+              id="signup-email"
               label="Email address"
               type="email"
               value={form.email}
@@ -72,14 +80,16 @@ export default function Signup({ navigate }) {
               autoComplete="email"
             />
             <Field
+              id="signup-password"
               label="Password"
               type="password"
               value={form.password}
               onChange={update('password')}
-              placeholder="At least 8 characters"
+              placeholder="At least 6 characters"
               autoComplete="new-password"
             />
             <Field
+              id="signup-confirm"
               label="Confirm password"
               type="password"
               value={form.confirmPassword}
@@ -87,7 +97,12 @@ export default function Signup({ navigate }) {
               placeholder="Repeat your password"
               autoComplete="new-password"
             />
-            <button className="primary-button" disabled={busy}>
+            <button
+              id="signup-submit-btn"
+              type="submit"
+              className="primary-button"
+              disabled={busy}
+            >
               {busy ? 'Creating account…' : 'Create account'} <span>→</span>
             </button>
           </form>

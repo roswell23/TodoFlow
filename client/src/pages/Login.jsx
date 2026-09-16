@@ -2,16 +2,18 @@ import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { authService } from '../services/authService'
 
-function Field({ label, type = 'text', value, onChange, placeholder, autoComplete }) {
+function Field({ id, label, type = 'text', value, onChange, placeholder, autoComplete }) {
   return (
-    <label className="field">
+    <label className="field" htmlFor={id}>
       <span>{label}</span>
       <input
+        id={id}
         type={type}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
         autoComplete={autoComplete}
+        required
       />
     </label>
   )
@@ -41,7 +43,7 @@ export default function Login({ navigate }) {
 
   return (
     <main className="auth-layout">
-      <section className="brand-panel">
+      <section className="brand-panel" aria-hidden="true">
         <div className="brand-mark">✓</div>
         <p className="brand-name">TodoFlow</p>
         <h1>Make space for<br /><em>what matters.</em></h1>
@@ -55,9 +57,10 @@ export default function Login({ navigate }) {
           <h2>Log in to TodoFlow</h2>
           <p className="form-subtitle">Pick up right where you left off.</p>
 
-          <form onSubmit={submit} className="auth-form">
-            {error && <div className="alert">{error}</div>}
+          <form onSubmit={submit} className="auth-form" noValidate>
+            {error && <div className="alert" role="alert">{error}</div>}
             <Field
+              id="login-email"
               label="Email address"
               type="email"
               value={email}
@@ -66,6 +69,7 @@ export default function Login({ navigate }) {
               autoComplete="email"
             />
             <Field
+              id="login-password"
               label="Password"
               type="password"
               value={password}
@@ -73,7 +77,12 @@ export default function Login({ navigate }) {
               placeholder="Enter your password"
               autoComplete="current-password"
             />
-            <button className="primary-button" disabled={busy}>
+            <button
+              id="login-submit-btn"
+              type="submit"
+              className="primary-button"
+              disabled={busy}
+            >
               {busy ? 'Logging in…' : 'Log in'} <span>→</span>
             </button>
           </form>
