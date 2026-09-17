@@ -10,6 +10,7 @@ const PORT = process.env.PORT || 4000
 // Allow the Vite dev server (and any CLIENT_URL set in .env)
 const allowedOrigins = [
   process.env.CLIENT_URL,
+  'https://usetodoflow.netlify.app',
   'http://localhost:5173',
   'http://localhost:5174',
 ].filter(Boolean)
