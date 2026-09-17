@@ -533,17 +533,6 @@ export default function Dashboard({ navigate }) {
           )}
         </section>
 
-        {/* ── User Profile Footer ── */}
-        <div className="user-card" aria-label="Signed-in user">
-          <div className="avatar" aria-hidden="true">
-            {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-          </div>
-          <div>
-            <p className="card-label">Signed in as</p>
-            <strong>{user?.name}</strong>
-            <p>{user?.email}</p>
-          </div>
-        </div>
 
       </section>
     </main>

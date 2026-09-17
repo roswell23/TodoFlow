@@ -19,9 +19,20 @@ export default function Navbar({ navigate }) {
         TodoFlow
       </div>
       {user && (
-        <button className="logout-button" onClick={handleLogout}>
-          Log out
-        </button>
+        <div className="nav-actions">
+          <div className="nav-user-info" title={user?.email}>
+            <div className="nav-avatar" aria-hidden="true">
+              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+            </div>
+            <div className="nav-user-meta">
+              <span className="nav-user-name">{user?.name}</span>
+              <span className="nav-user-email">{user?.email}</span>
+            </div>
+          </div>
+          <button className="logout-button" onClick={handleLogout}>
+            Log out
+          </button>
+        </div>
       )}
     </header>
   )

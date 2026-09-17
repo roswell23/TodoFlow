@@ -353,6 +353,67 @@ a { color: inherit; text-decoration: none; }
   flex-shrink: 0;
 }
 
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 12px 4px 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  transition: all var(--duration-fast) var(--ease);
+}
+
+.nav-user-info:hover {
+  background: var(--bg-alt);
+  border-color: var(--border-focus);
+}
+
+.nav-avatar {
+  width: 28px;
+  height: 28px;
+  background: var(--brand);
+  color: var(--text-on-dark);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .8125rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.nav-user-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.nav-user-name {
+  font-size: .8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-user-email {
+  font-size: .6875rem;
+  color: var(--text-muted);
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .logout-button {
   height: 34px;
   padding: 0 14px;
@@ -363,6 +424,8 @@ a { color: inherit; text-decoration: none; }
   font-weight: 500;
   color: var(--text-secondary);
   transition: all var(--duration-fast) var(--ease);
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .logout-button:hover {
@@ -1406,8 +1469,21 @@ a { color: inherit; text-decoration: none; }
   .edit-buttons { justify-content: flex-end; }
 }
 
+@media (max-width: 600px) {
+  .nav-user-email {
+    display: none;
+  }
+}
+
 @media (max-width: 480px) {
   .topbar { padding: 0 16px; }
+  .nav-actions { gap: 8px; }
+  .nav-user-meta { display: none; }
+  .nav-user-info {
+    padding: 0;
+    border: none;
+    background: transparent;
+  }
   .dashboard-content { padding: 24px 16px 60px; gap: 20px; }
   .status-tabs { width: 100%; }
   .tab-btn { flex: 1; justify-content: center; }
