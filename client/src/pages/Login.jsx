@@ -3,18 +3,34 @@ import { useAuth } from '../context/AuthContext'
 import { authService } from '../services/authService'
 
 function Field({ id, label, type = 'text', value, onChange, placeholder, autoComplete }) {
+  const [revealed, setRevealed] = useState(false)
+  const isPassword = type === 'password'
+
   return (
     <label className="field" htmlFor={id}>
       <span>{label}</span>
-      <input
-        id={id}
-        type={type}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        required
-      />
+      <div className="password-input-wrap">
+        <input
+          id={id}
+          type={isPassword && revealed ? 'text' : type}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          required
+        />
+        {isPassword && (
+          <button
+            type="button"
+            className="password-toggle"
+            onClick={() => setRevealed(!revealed)}
+            aria-label={revealed ? 'Hide password' : 'Show password'}
+            aria-pressed={revealed}
+          >
+            {revealed ? 'Hide' : 'Show'}
+          </button>
+        )}
+      </div>
     </label>
   )
 }
