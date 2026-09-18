@@ -2,6 +2,9 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const { prisma } = require('../db')
 
+const isValidEmail = (email) =>
+  typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+
 const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
     expiresIn: '7d',
@@ -13,12 +16,20 @@ const signup = async (req, res) => {
   try {
     const { name, email, password } = req.body
 
-    if (!name || !email || !password) {
+    if (typeof name !== 'string' || typeof email !== 'string' || typeof password !== 'string' || !name.trim() || !email.trim() || !password) {
       return res.status(400).json({ message: 'All fields (name, email, password) are required.' })
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters long.' })
+    if (name.trim().length > 100 || email.trim().length > 254) {
+      return res.status(400).json({ message: 'Name or email is too long.' })
+    }
+
+    if (!isValidEmail(email.trim())) {
+      return res.status(400).json({ message: 'Please provide a valid email address.' })
+    }
+
+    if (password.length < 8 || password.length > 128) {
+      return res.status(400).json({ message: 'Password must be between 8 and 128 characters long.' })
     }
 
     const normalizedEmail = email.toLowerCase().trim()
@@ -65,8 +76,12 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body
 
-    if (!email || !password) {
+    if (typeof email !== 'string' || typeof password !== 'string' || !email.trim() || !password) {
       return res.status(400).json({ message: 'Email and password are required.' })
+    }
+
+    if (email.trim().length > 254 || !isValidEmail(email.trim())) {
+      return res.status(401).json({ message: 'Invalid email or password.' })
     }
 
     const normalizedEmail = email.toLowerCase().trim()

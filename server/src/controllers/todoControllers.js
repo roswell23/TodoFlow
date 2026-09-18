@@ -1,5 +1,9 @@
 const { prisma } = require('../db')
 
+const MAX_TITLE_LENGTH = 200
+const MAX_DESCRIPTION_LENGTH = 5000
+const MAX_CATEGORY_LENGTH = 40
+
 /**
  * GET /api/todos
  * Fetch all todos for the authenticated user, with optional filtering and sorting.
@@ -25,7 +29,11 @@ const getTodos = async (req, res) => {
       where.category = category
     }
 
-    if (search && search.trim()) {
+    if (typeof search === 'string' && search.trim().length > 100) {
+      return res.status(400).json({ message: 'Search query is too long.' })
+    }
+
+    if (typeof search === 'string' && search.trim()) {
       where.OR = [
         { title: { contains: search.trim(), mode: 'insensitive' } },
         { description: { contains: search.trim(), mode: 'insensitive' } },
@@ -101,8 +109,21 @@ const createTodo = async (req, res) => {
     const { title, description, priority = 'medium', category = 'general', dueDate } = req.body
     const userId = req.user.id
 
-    if (!title || !title.trim()) {
+    if (typeof title !== 'string' || !title.trim()) {
       return res.status(400).json({ message: 'Task title is required.' })
+    }
+
+    if (title.trim().length > MAX_TITLE_LENGTH) {
+      return res.status(400).json({ message: `Task title cannot exceed ${MAX_TITLE_LENGTH} characters.` })
+    }
+    if (description !== undefined && description !== null && typeof description !== 'string') {
+      return res.status(400).json({ message: 'Description must be text.' })
+    }
+    if (typeof description === 'string' && description.trim().length > MAX_DESCRIPTION_LENGTH) {
+      return res.status(400).json({ message: `Description cannot exceed ${MAX_DESCRIPTION_LENGTH} characters.` })
+    }
+    if (typeof category !== 'string' || category.trim().length > MAX_CATEGORY_LENGTH) {
+      return res.status(400).json({ message: `Category cannot exceed ${MAX_CATEGORY_LENGTH} characters.` })
     }
 
     const parsedDueDate = dueDate ? new Date(dueDate) : null
@@ -145,21 +166,36 @@ const updateTodo = async (req, res) => {
 
     const data = {}
     if (title !== undefined) {
-      if (!title.trim()) {
+      if (typeof title !== 'string' || !title.trim()) {
         return res.status(400).json({ message: 'Task title cannot be empty.' })
+      }
+      if (title.trim().length > MAX_TITLE_LENGTH) {
+        return res.status(400).json({ message: `Task title cannot exceed ${MAX_TITLE_LENGTH} characters.` })
       }
       data.title = title.trim()
     }
     if (description !== undefined) {
+      if (description !== null && typeof description !== 'string') {
+        return res.status(400).json({ message: 'Description must be text.' })
+      }
+      if (typeof description === 'string' && description.trim().length > MAX_DESCRIPTION_LENGTH) {
+        return res.status(400).json({ message: `Description cannot exceed ${MAX_DESCRIPTION_LENGTH} characters.` })
+      }
       data.description = description ? description.trim() : null
     }
     if (completed !== undefined) {
-      data.completed = Boolean(completed)
+      if (typeof completed !== 'boolean') {
+        return res.status(400).json({ message: 'Completed must be a boolean.' })
+      }
+      data.completed = completed
     }
     if (priority !== undefined && ['low', 'medium', 'high'].includes(priority)) {
       data.priority = priority
     }
     if (category !== undefined) {
+      if (typeof category !== 'string' || category.trim().length > MAX_CATEGORY_LENGTH) {
+        return res.status(400).json({ message: `Category cannot exceed ${MAX_CATEGORY_LENGTH} characters.` })
+      }
       data.category = category.trim() || 'general'
     }
     if (dueDate !== undefined) {

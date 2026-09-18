@@ -1,11 +1,17 @@
 require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
+const helmet = require('helmet')
+const rateLimit = require('express-rate-limit')
 const authRoutes = require('./routes/authRoutes')
 const todoRoutes = require('./routes/todoRoutes')
 
 const app = express()
 const PORT = process.env.PORT || 4000
+
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+  throw new Error('JWT_SECRET must be set and at least 32 characters long.')
+}
 
 // Allow the Vite dev server (and any CLIENT_URL set in .env)
 const allowedOrigins = [
@@ -16,6 +22,8 @@ const allowedOrigins = [
 ].filter(Boolean)
 
 // Middleware
+app.disable('x-powered-by')
+app.use(helmet())
 app.use(cors({
   origin: (origin, cb) => {
     // Allow requests with no origin (curl, Postman, mobile apps)
@@ -24,7 +32,18 @@ app.use(cors({
   },
   credentials: true,
 }))
-app.use(express.json())
+app.use(express.json({ limit: '20kb' }))
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { message: 'Too many authentication attempts. Please try again later.' },
+})
+
+app.use('/api/auth/login', authLimiter)
+app.use('/api/auth/signup', authLimiter)
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
