@@ -1,19 +1,35 @@
 import { useState } from 'react'
 import { authService } from '../services/authService'
 
-function Field({ id, label, type = 'text', value, onChange, placeholder, autoComplete }) {
+function Field({ id, label, type = 'text', value, onChange, placeholder, autoComplete, canReveal = false }) {
+  const [revealed, setRevealed] = useState(false)
+  const inputType = canReveal && revealed ? 'text' : type
+
   return (
     <label className="field" htmlFor={id}>
       <span>{label}</span>
-      <input
-        id={id}
-        type={type}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        required
-      />
+      <div className="password-input-wrap">
+        <input
+          id={id}
+          type={inputType}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          required
+        />
+        {canReveal && (
+          <button
+            type="button"
+            className="password-toggle"
+            onClick={() => setRevealed(!revealed)}
+            aria-label={revealed ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
+            aria-pressed={revealed}
+          >
+            {revealed ? 'Hide' : 'Show'}
+          </button>
+        )}
+      </div>
     </label>
   )
 }
@@ -30,7 +46,7 @@ export default function Signup({ navigate }) {
     setError('')
 
     if (!form.name.trim()) return setError('Please enter your name.')
-    if (form.password.length < 6) return setError('Password must be at least 6 characters.')
+    if (form.password.length < 8) return setError('Password must be at least 8 characters.')
     if (form.password !== form.confirmPassword) return setError('Passwords do not match.')
 
     setBusy(true)
@@ -85,8 +101,9 @@ export default function Signup({ navigate }) {
               type="password"
               value={form.password}
               onChange={update('password')}
-              placeholder="At least 6 characters"
+              placeholder="At least 8 characters"
               autoComplete="new-password"
+              canReveal
             />
             <Field
               id="signup-confirm"
@@ -96,6 +113,7 @@ export default function Signup({ navigate }) {
               onChange={update('confirmPassword')}
               placeholder="Repeat your password"
               autoComplete="new-password"
+              canReveal
             />
             <button
               id="signup-submit-btn"

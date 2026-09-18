@@ -244,6 +244,33 @@ a { color: inherit; text-decoration: none; }
 
 .field input::placeholder { color: var(--text-muted); }
 
+.password-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrap input {
+  width: 100%;
+  padding-right: 58px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: .75rem;
+  font-weight: 600;
+  padding: 4px;
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+  color: var(--text-primary);
+}
+
 /* Alert */
 .alert {
   padding: 10px 14px;
