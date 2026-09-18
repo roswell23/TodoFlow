@@ -4,27 +4,27 @@
 /* ─── Design Tokens ─────────────────────────────────────────────── */
 :root {
   /* Neutral palette — warm off-white → charcoal */
-  --bg:           #f5f8f3;
-  --bg-alt:       #e6f2dd;
+  --bg:           #e1dcc9;
+  --bg-alt:       #eeeadd;
   --surface:      #ffffff;
   --surface-raised: #ffffff;
-  --border:       #b1d3b9;
-  --border-focus: #24342f;
+  --border:       #d3cbb7;
+  --border-focus: #1f150c;
 
   /* Text */
-  --text-primary:   #24342f;
-  --text-secondary: #526760;
-  --text-muted:     #71877f;
+  --text-primary:   #1f150c;
+  --text-secondary: #5c4935;
+  --text-muted:     #877b6b;
   --text-on-dark:   #ffffff;
 
   /* Brand / Primary CTA — charcoal */
-  --brand:          #659287;
-  --brand-hover:    #527d72;
-  --brand-active:   #456c62;
+  --brand:          #1f150c;
+  --brand-hover:    #000000;
+  --brand-active:   #412d15;
 
   /* Accent — muted warm amber */
-  --accent:         #88bda4;
-  --accent-light:   #e6f2dd;
+  --accent:         #412d15;
+  --accent-light:   #e1dcc9;
 
   /* Status */
   --success:        #16a34a;
