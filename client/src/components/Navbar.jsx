@@ -1,8 +1,9 @@
 import { useAuth } from '../context/AuthContext'
+import ThemeToggle from './ThemeToggle'
 
 /**
  * Top navigation bar shown on authenticated pages.
- * Displays the TodoFlow brand mark and a logout button.
+ * Displays the TodoFlow brand mark, profile pill, theme toggle, and logout button.
  */
 export default function Navbar({ navigate }) {
   const { user, logout } = useAuth()
@@ -15,11 +16,11 @@ export default function Navbar({ navigate }) {
   return (
     <header className="topbar">
       <div className="logo">
-        <span>✓</span>
+        <span aria-hidden="true">✓</span>
         TodoFlow
       </div>
-      {user && (
-        <div className="nav-actions">
+      <div className="nav-actions">
+        {user && (
           <div className="nav-user-info" title={user?.email}>
             <div className="nav-avatar" aria-hidden="true">
               {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
@@ -29,11 +30,14 @@ export default function Navbar({ navigate }) {
               <span className="nav-user-email">{user?.email}</span>
             </div>
           </div>
+        )}
+        <ThemeToggle />
+        {user && (
           <button className="logout-button" onClick={handleLogout}>
             Log out
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </header>
   )
 }

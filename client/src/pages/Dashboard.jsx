@@ -1,8 +1,11 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
 import TodoItem from '../components/TodoItem'
 import { todoService } from '../services/todoService'
+
+// ── Max title length ───────────────────────────────────────────────
+const MAX_TITLE_LEN = 160
 
 // ── Inline empty-state SVG illustration ───────────────────────────
 function EmptyIllustration() {
@@ -14,24 +17,120 @@ function EmptyIllustration() {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <rect x="8" y="14" width="56" height="44" rx="8" fill="#F0EEEC" stroke="#E3E0DB" strokeWidth="1.5" />
-      <rect x="16" y="26" width="28" height="3" rx="1.5" fill="#D5D2CE" />
-      <rect x="16" y="33" width="20" height="3" rx="1.5" fill="#E3E0DB" />
-      <rect x="16" y="40" width="24" height="3" rx="1.5" fill="#E3E0DB" />
-      <circle cx="54" cy="22" r="10" fill="#1A1A1A" />
-      <path d="M49.5 22l3 3 5-5" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="8" y="14" width="56" height="44" rx="8" fill="var(--surface-2)" stroke="var(--border)" strokeWidth="1.5" />
+      <rect x="16" y="26" width="28" height="3" rx="1.5" fill="var(--border-strong)" />
+      <rect x="16" y="33" width="20" height="3" rx="1.5" fill="var(--border)" />
+      <rect x="16" y="40" width="24" height="3" rx="1.5" fill="var(--border)" />
+      <circle cx="54" cy="22" r="10" fill="var(--primary)" />
+      <path d="M49.5 22l3 3 5-5" stroke="var(--on-primary)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
 
-// ── Suggestion chips for empty state ──────────────────────────────
+// ── SVG icons for suggestion chips (no emoji) ──────────────────────
+const ChipIcons = {
+  cart: (
+    <svg className="chip-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M1 1h2l1.5 6h6l1.5-5H4" />
+      <circle cx="7" cy="12" r=".8" fill="currentColor" stroke="none" />
+      <circle cx="11" cy="12" r=".8" fill="currentColor" stroke="none" />
+    </svg>
+  ),
+  mail: (
+    <svg className="chip-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="1" y="3" width="12" height="8" rx="1.5" />
+      <path d="M1 4l6 4 6-4" />
+    </svg>
+  ),
+  run: (
+    <svg className="chip-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="8" cy="2.5" r="1" fill="currentColor" stroke="none" />
+      <path d="M9 4.5L7 7l-3 1 2 3" />
+      <path d="M6 5.5l2.5 1" />
+    </svg>
+  ),
+  notes: (
+    <svg className="chip-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="1" width="10" height="12" rx="1.5" />
+      <path d="M4 4h6M4 7h6M4 10h4" />
+    </svg>
+  ),
+  phone: (
+    <svg className="chip-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 2h3l1 3-1.5 1.5A8 8 0 009 10l1.5-1.5L13 9.5v3A11 11 0 013 2z" />
+    </svg>
+  ),
+}
+
+// ── Suggestion chips — text only (no emoji) ────────────────────────
 const SUGGESTIONS = [
-  'Buy groceries 🛒',
-  'Reply to emails 📬',
-  'Morning workout 🏃',
-  'Review project notes 📋',
-  'Call a friend 📞',
+  { label: 'Buy groceries',       icon: 'cart'  },
+  { label: 'Reply to emails',     icon: 'mail'  },
+  { label: 'Morning workout',     icon: 'run'   },
+  { label: 'Review project notes',icon: 'notes' },
+  { label: 'Call a friend',       icon: 'phone' },
 ]
+
+// ── Progress bar motivational messages ────────────────────────────
+function getProgressMessage(rate) {
+  if (rate === 0)   return 'Start with a single task.'
+  if (rate < 25)    return 'Good start — keep going!'
+  if (rate < 50)    return "You're building momentum."
+  if (rate < 75)    return 'Halfway there — great work!'
+  if (rate < 100)   return 'Almost done — finish strong!'
+  return            'All done! Excellent day!'
+}
+
+// ── Skeleton loader ───────────────────────────────────────────────
+function SkeletonList() {
+  return (
+    <div className="skeleton-list" aria-hidden="true">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="skeleton-item" />
+      ))}
+    </div>
+  )
+}
+
+// ── Details icon ──────────────────────────────────────────────────
+function DetailsIcon({ expanded }) {
+  return (
+    <svg
+      className="btn-details-icon"
+      viewBox="0 0 14 14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {expanded
+        ? <path d="M2 7h10M7 2v10" transform="rotate(45 7 7)" />
+        : <><circle cx="7" cy="4" r=".6" fill="currentColor" stroke="none" /><path d="M7 6.5v4" /></>
+      }
+    </svg>
+  )
+}
+
+// ── Toast component ───────────────────────────────────────────────
+function Toast({ message, onUndo, onDismiss }) {
+  useEffect(() => {
+    const t = setTimeout(onDismiss, 4000)
+    return () => clearTimeout(t)
+  }, [onDismiss])
+
+  return (
+    <div className="toast" role="status" aria-live="polite">
+      <span>{message}</span>
+      {onUndo && (
+        <button type="button" className="toast-undo-btn" onClick={onUndo}>
+          Undo
+        </button>
+      )}
+    </div>
+  )
+}
 
 export default function Dashboard({ navigate }) {
   const { user } = useAuth()
@@ -43,6 +142,9 @@ export default function Dashboard({ navigate }) {
   })
   const [loading, setLoading] = useState(true)
   const [actionError, setActionError] = useState('')
+
+  // Toast state: { id, message, undoFn? }
+  const [toasts, setToasts] = useState([])
 
   // Filters & Sorting
   const [statusFilter, setStatusFilter] = useState('all')
@@ -59,8 +161,21 @@ export default function Dashboard({ navigate }) {
   const [newDueDate, setNewDueDate] = useState('')
   const [showFormDetails, setShowFormDetails] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [titleError, setTitleError] = useState('')
 
-  // Load initial tasks & stats
+  const inputRef = useRef(null)
+  const announcerRef = useRef(null)
+
+  // ── announce to screen readers ─────────────────────────────────
+  const announce = useCallback((msg) => {
+    if (announcerRef.current) {
+      announcerRef.current.textContent = ''
+      // micro-delay so SR re-reads even identical messages
+      setTimeout(() => { announcerRef.current.textContent = msg }, 50)
+    }
+  }, [])
+
+  // ── Load data ──────────────────────────────────────────────────
   const fetchAllData = async () => {
     try {
       setActionError('')
@@ -80,20 +195,51 @@ export default function Dashboard({ navigate }) {
 
   useEffect(() => { fetchAllData() }, [])
 
-  // Create task handler
+  // ── Keyboard shortcuts (N = new task, / = search) ──────────────
+  useEffect(() => {
+    const onKey = (e) => {
+      // Don't fire when typing in an input/textarea/select
+      const tag = document.activeElement?.tagName
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return
+      if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault()
+        inputRef.current?.focus()
+      }
+      if (e.key === '/') {
+        e.preventDefault()
+        document.getElementById('task-search-input')?.focus()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  // ── Refresh stats helper ───────────────────────────────────────
+  const refreshStats = () => todoService.getStats().then(setStats).catch(() => {})
+
+  // ── Create task ────────────────────────────────────────────────
   const handleCreateTodo = async (e) => {
     e?.preventDefault()
-    if (!newTitle.trim()) return
+    const trimmed = newTitle.trim()
 
+    if (!trimmed) {
+      setTitleError('Task title cannot be empty.')
+      return
+    }
+    if (trimmed.length > MAX_TITLE_LEN) {
+      setTitleError(`Title is too long (max ${MAX_TITLE_LEN} characters).`)
+      return
+    }
+    setTitleError('')
     setIsSubmitting(true)
     setActionError('')
+
     try {
       const created = await todoService.createTodo({
-        title: newTitle.trim(),
+        title: trimmed,
         description: newDescription.trim() || undefined,
         priority: newPriority,
         category: newCategory,
-        // Fix timezone: use noon UTC so date never shifts a day
         dueDate: newDueDate ? new Date(newDueDate + 'T12:00:00').toISOString() : undefined,
       })
       setTodos((prev) => [created, ...prev])
@@ -103,7 +249,8 @@ export default function Dashboard({ navigate }) {
       setNewCategory('general')
       setNewDueDate('')
       setShowFormDetails(false)
-      todoService.getStats().then(setStats).catch(() => {})
+      announce(`Task "${trimmed}" added.`)
+      refreshStats()
     } catch (err) {
       setActionError(err.message || 'Could not create task.')
     } finally {
@@ -111,58 +258,77 @@ export default function Dashboard({ navigate }) {
     }
   }
 
-  // Toggle completion (optimistic)
+  // ── Toggle completion (optimistic) ────────────────────────────
   const handleToggle = async (id) => {
     setTodos((prev) => prev.map((t) => t.id === id ? { ...t, completed: !t.completed } : t))
     try {
       await todoService.toggleTodo(id)
-      todoService.getStats().then(setStats).catch(() => {})
-    } catch (err) {
+      refreshStats()
+    } catch {
       setTodos((prev) => prev.map((t) => t.id === id ? { ...t, completed: !t.completed } : t))
       setActionError('Failed to update task.')
     }
   }
 
-  // Update task
+  // ── Update task ───────────────────────────────────────────────
   const handleUpdate = async (id, updates) => {
     try {
       const updated = await todoService.updateTodo(id, updates)
       setTodos((prev) => prev.map((t) => t.id === id ? updated : t))
-      todoService.getStats().then(setStats).catch(() => {})
+      refreshStats()
     } catch (err) {
       setActionError(err.message || 'Failed to save changes.')
       throw err
     }
   }
 
-  // Delete task (optimistic)
+  // ── Delete with Undo toast ────────────────────────────────────
   const handleDelete = async (id) => {
     const backup = [...todos]
+    const deleted = todos.find((t) => t.id === id)
     setTodos((prev) => prev.filter((t) => t.id !== id))
+    announce(`Task "${deleted?.title}" deleted.`)
+
+    const toastId = Date.now()
+    const undoFn = () => {
+      setTodos(backup)
+      setToasts((prev) => prev.filter((t) => t.id !== toastId))
+      announce('Delete undone.')
+    }
+
+    setToasts((prev) => [
+      ...prev,
+      { id: toastId, message: 'Task deleted', undoFn },
+    ])
+
     try {
       await todoService.deleteTodo(id)
-      todoService.getStats().then(setStats).catch(() => {})
+      refreshStats()
     } catch {
       setTodos(backup)
       setActionError('Failed to delete task.')
+      setToasts((prev) => prev.filter((t) => t.id !== toastId))
     }
   }
 
-  // Clear completed
+  const dismissToast = (id) => setToasts((prev) => prev.filter((t) => t.id !== id))
+
+  // ── Clear completed ───────────────────────────────────────────
   const handleClearCompleted = async () => {
-    if (!window.confirm('Clear all completed tasks?')) return
     const backup = [...todos]
+    const count = todos.filter((t) => t.completed).length
     setTodos((prev) => prev.filter((t) => !t.completed))
+    announce(`${count} completed task${count !== 1 ? 's' : ''} cleared.`)
     try {
       await todoService.clearCompleted()
-      todoService.getStats().then(setStats).catch(() => {})
+      refreshStats()
     } catch {
       setTodos(backup)
       setActionError('Failed to clear completed tasks.')
     }
   }
 
-  // Reset all filters
+  // ── Reset filters ─────────────────────────────────────────────
   const resetFilters = () => {
     setStatusFilter('all')
     setPriorityFilter('all')
@@ -170,7 +336,7 @@ export default function Dashboard({ navigate }) {
     setSearchQuery('')
   }
 
-  // Client-side filter + sort
+  // ── Client-side filter + sort ─────────────────────────────────
   const filteredTodos = useMemo(() => {
     return todos
       .filter((todo) => {
@@ -202,18 +368,28 @@ export default function Dashboard({ navigate }) {
       })
   }, [todos, statusFilter, priorityFilter, categoryFilter, searchQuery, sortBy])
 
-  // Detect if any filter is active
   const hasActiveFilters =
     statusFilter !== 'all' || priorityFilter !== 'all' ||
     categoryFilter !== 'all' || searchQuery.trim()
 
-  // Date greeting
   const todayFormatted = new Intl.DateTimeFormat('en-US', {
     weekday: 'long', month: 'short', day: 'numeric',
   }).format(new Date())
 
+  const hasInput = newTitle.trim().length > 0
+  const tooLong  = newTitle.length > MAX_TITLE_LEN
+
   return (
     <main className="dashboard">
+      {/* Screen-reader announcer */}
+      <div
+        ref={announcerRef}
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      />
+
       <Navbar navigate={navigate} />
 
       <section className="dashboard-content">
@@ -222,20 +398,25 @@ export default function Dashboard({ navigate }) {
         <div className="dashboard-header">
           <div>
             <p className="eyebrow">{todayFormatted} · Workspace</p>
-            <h1>Welcome, {user?.name ? user.name.split(' ')[0] : 'there'}.</h1>
+            <h1>Welcome, {user?.name ? user.name.split(' ')[0] : 'there'}</h1>
             <p className="dashboard-lede">
               Organize your priorities and flow through your day.
             </p>
           </div>
 
-          <div className="progress-card">
+          <div className="progress-card" aria-label="Progress overview">
             <div className="progress-card-top">
-              <span className="progress-label">Progress</span>
-              <span className="progress-percent">{stats.completionRate}%</span>
+              <div>
+                <span className="progress-label">Today's Progress</span>
+                <p className="progress-message">{getProgressMessage(stats.completionRate)}</p>
+              </div>
+              <span className="progress-percent" aria-label={`${stats.completionRate} percent complete`}>
+                {stats.completionRate}%
+              </span>
             </div>
-            <div className="progress-bar-track">
+            <div className="progress-bar-track" role="progressbar" aria-valuenow={stats.completionRate} aria-valuemin={0} aria-valuemax={100}>
               <div
-                className="progress-bar-fill"
+                className={`progress-bar-fill${stats.completionRate === 100 ? ' full' : ''}`}
                 style={{ width: `${stats.completionRate}%` }}
               />
             </div>
@@ -259,25 +440,35 @@ export default function Dashboard({ navigate }) {
         {actionError && (
           <div className="alert-banner" role="alert">
             <span>⚠ {actionError}</span>
-            <button type="button" onClick={() => setActionError('')} aria-label="Dismiss">×</button>
+            <button type="button" onClick={() => setActionError('')} aria-label="Dismiss error">×</button>
           </div>
         )}
 
         {/* ── Task Creator ── */}
         <div className="task-creator-card">
-          <form onSubmit={handleCreateTodo}>
+          <form onSubmit={handleCreateTodo} noValidate>
             <div className="creator-main-row">
               <div className="creator-input-wrap">
                 <span className="creator-bullet" aria-hidden="true">+</span>
                 <input
+                  ref={inputRef}
                   id="new-task-input"
                   type="text"
                   className="creator-input"
-                  placeholder="What would you like to achieve?"
+                  placeholder="What would you like to achieve? (N)"
                   value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
+                  onChange={(e) => {
+                    setNewTitle(e.target.value)
+                    if (titleError) setTitleError('')
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleCreateTodo(e)
+                  }}
                   disabled={isSubmitting}
                   autoComplete="off"
+                  aria-label="New task title"
+                  aria-describedby={titleError ? 'title-error' : undefined}
+                  maxLength={MAX_TITLE_LEN + 20}
                 />
               </div>
 
@@ -287,31 +478,46 @@ export default function Dashboard({ navigate }) {
                   className={`btn-details-toggle${showFormDetails ? ' active' : ''}`}
                   onClick={() => setShowFormDetails(!showFormDetails)}
                   aria-expanded={showFormDetails}
+                  aria-controls="creator-drawer"
                   title="Toggle additional details"
                 >
+                  <DetailsIcon expanded={showFormDetails} />
                   {showFormDetails ? '− Details' : '+ Details'}
                 </button>
 
                 <button
                   type="submit"
                   id="add-task-btn"
-                  className="creator-submit-btn"
-                  disabled={isSubmitting || !newTitle.trim()}
+                  className={`creator-submit-btn${hasInput && !tooLong ? ' enabled' : ''}`}
+                  disabled={isSubmitting || !hasInput || tooLong}
+                  aria-label={isSubmitting ? 'Adding task…' : 'Add task'}
                 >
                   {isSubmitting ? 'Adding…' : 'Add Task'}
                 </button>
               </div>
             </div>
 
+            {titleError && (
+              <p id="title-error" className="creator-validation-msg" role="alert">
+                ⚠ {titleError}
+              </p>
+            )}
+            {tooLong && !titleError && (
+              <p className="creator-validation-msg" role="alert">
+                ⚠ Title too long ({newTitle.length}/{MAX_TITLE_LEN} characters).
+              </p>
+            )}
+
             {/* Expandable options drawer */}
             {showFormDetails && (
-              <div className="creator-expanded-drawer">
+              <div id="creator-drawer" className="creator-expanded-drawer">
                 <textarea
                   className="creator-desc-input"
                   placeholder="Notes, links, or description (optional)…"
                   rows={2}
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
+                  aria-label="Task notes"
                 />
                 <div className="creator-meta-row">
                   <div className="meta-field">
@@ -361,9 +567,9 @@ export default function Dashboard({ navigate }) {
           <div className="todos-toolbar" role="toolbar" aria-label="Task filters">
             <div className="status-tabs" role="tablist">
               {[
-                { key: 'all',       label: 'All',       count: stats.total },
-                { key: 'active',    label: 'Active',    count: stats.active },
-                { key: 'completed', label: 'Done',      count: stats.completed },
+                { key: 'all',       label: 'All',    count: stats.total },
+                { key: 'active',    label: 'Active', count: stats.active },
+                { key: 'completed', label: 'Done',   count: stats.completed },
               ].map(({ key, label, count }) => (
                 <button
                   key={key}
@@ -382,8 +588,9 @@ export default function Dashboard({ navigate }) {
             <div className="search-wrap">
               <span className="search-icon" aria-hidden="true">⌕</span>
               <input
+                id="task-search-input"
                 type="search"
-                placeholder="Search tasks…"
+                placeholder="Search tasks… (/)"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="search-input"
@@ -449,10 +656,7 @@ export default function Dashboard({ navigate }) {
         {/* ── Task List ── */}
         <section className="todos-section" aria-label="Task list">
           {loading ? (
-            <div className="todos-loading">
-              <div className="loading-spinner" role="status" aria-label="Loading" />
-              <p>Loading your workspace…</p>
-            </div>
+            <SkeletonList />
 
           ) : filteredTodos.length === 0 ? (
             <div className="empty-card">
@@ -468,16 +672,18 @@ export default function Dashboard({ navigate }) {
                   <div className="suggestion-chips" role="list">
                     {SUGGESTIONS.map((s) => (
                       <button
-                        key={s}
+                        key={s.label}
                         type="button"
                         role="listitem"
                         className="chip"
                         onClick={() => {
-                          setNewTitle(s)
-                          document.getElementById('new-task-input')?.focus()
+                          setNewTitle(s.label)
+                          inputRef.current?.focus()
                         }}
+                        aria-label={`Start with: ${s.label}`}
                       >
-                        {s}
+                        {ChipIcons[s.icon]}
+                        {s.label}
                       </button>
                     ))}
                   </div>
@@ -533,8 +739,21 @@ export default function Dashboard({ navigate }) {
           )}
         </section>
 
-
       </section>
+
+      {/* ── Toast container ── */}
+      {toasts.length > 0 && (
+        <div className="toast-container" aria-label="Notifications">
+          {toasts.map((t) => (
+            <Toast
+              key={t.id}
+              message={t.message}
+              onUndo={t.undoFn}
+              onDismiss={() => dismissToast(t.id)}
+            />
+          ))}
+        </div>
+      )}
     </main>
   )
 }
