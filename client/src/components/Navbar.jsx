@@ -20,6 +20,17 @@ export default function Navbar({ navigate }) {
         TodoFlow
       </div>
       <div className="nav-actions">
+        {user?.role === 'ADMIN' && (
+          <button
+            type="button"
+            className="admin-nav-button"
+            onClick={() => navigate('/admin')}
+            title="Access Administrator Control Center"
+          >
+            <span aria-hidden="true">🛡️</span>
+            <span className="admin-nav-text">Admin Panel</span>
+          </button>
+        )}
         {user && (
           <div className="nav-user-info" title={user?.email}>
             <div className="nav-avatar" aria-hidden="true">

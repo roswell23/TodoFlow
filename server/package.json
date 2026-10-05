@@ -10,7 +10,12 @@
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "db:push": "prisma db push",
+    "db:seed": "node prisma/seed.js",
+    "test:rbac": "node prisma/test-rbac.js",
     "postinstall": "prisma generate || exit 0"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   },
   "keywords": [],
   "author": "",

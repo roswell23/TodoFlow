@@ -5,8 +5,8 @@ const { prisma } = require('../db')
 const isValidEmail = (email) =>
   typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 
-const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+const generateToken = (user) => {
+  return jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, {
     expiresIn: '7d',
   })
 }
@@ -44,21 +44,25 @@ const signup = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10)
 
+    // Security: Normal users must NOT be able to register themselves as ADMIN
     const user = await prisma.user.create({
       data: {
         name: name.trim(),
         email: normalizedEmail,
         password: hashedPassword,
+        role: 'USER',
+        isActive: true,
       },
       select: {
         id: true,
         name: true,
         email: true,
+        role: true,
         createdAt: true,
       },
     })
 
-    const token = generateToken(user.id)
+    const token = generateToken(user)
 
     return res.status(201).json({
       message: 'Account created successfully.',
@@ -94,12 +98,16 @@ const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password.' })
     }
 
+    if (!user.isActive) {
+      return res.status(403).json({ message: 'Your account has been deactivated. Please contact an administrator.' })
+    }
+
     const isMatch = await bcrypt.compare(password, user.password)
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid email or password.' })
     }
 
-    const token = generateToken(user.id)
+    const token = generateToken(user)
 
     return res.status(200).json({
       message: 'Login successful.',
@@ -107,6 +115,7 @@ const login = async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        role: user.role,
         createdAt: user.createdAt,
       },
       token,

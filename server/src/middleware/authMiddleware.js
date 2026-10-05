@@ -17,6 +17,8 @@ const authenticateToken = async (req, res, next) => {
         id: true,
         name: true,
         email: true,
+        role: true,
+        isActive: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -24,6 +26,10 @@ const authenticateToken = async (req, res, next) => {
 
     if (!user) {
       return res.status(401).json({ message: 'User not found or session invalid.' })
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({ message: 'Account has been deactivated. Please contact an administrator.' })
     }
 
     req.user = user
@@ -36,4 +42,23 @@ const authenticateToken = async (req, res, next) => {
   }
 }
 
-module.exports = { authenticateToken }
+/**
+ * Reusable middleware to verify that the authenticated user has role === 'ADMIN'.
+ * Responds with HTTP 403 Forbidden if user lacks admin privileges.
+ */
+const requireAdmin = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Authentication required.' })
+  }
+
+  if (req.user.role !== 'ADMIN') {
+    return res.status(403).json({ message: 'Forbidden. Admin privileges required.' })
+  }
+
+  next()
+}
+
+module.exports = {
+  authenticateToken,
+  requireAdmin,
+}

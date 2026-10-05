@@ -9,11 +9,18 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 model User {
   id        String   @id @default(cuid())
   name      String
   email     String   @unique
   password  String
+  role      Role     @default(USER)
+  isActive  Boolean  @default(true)
   todos     Todo[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
