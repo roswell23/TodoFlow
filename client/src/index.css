@@ -311,12 +311,20 @@ a { color: inherit; text-decoration: none; }
 /* ─── Loading Screen ─────────────────────────────────────────────── */
 .loading-screen {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 14px;
   height: 100vh;
   font-size: var(--text-base);
   color: var(--text-muted);
   letter-spacing: .02em;
+}
+
+.loading-screen .loading-spinner {
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
 }
 
 /* ─── Auth Layout ────────────────────────────────────────────────── */
@@ -2087,7 +2095,9 @@ a { color: inherit; text-decoration: none; }
   .filter-select { flex: 1; min-width: 0; }
 
   .creator-main-row { flex-wrap: wrap; }
-  .creator-actions { width: 100%; justify-content: flex-end; }
+  .creator-input-wrap { min-width: 0; }
+  .creator-actions { width: 100%; justify-content: space-between; }
+  .creator-submit-btn { flex: 1; }
 
   .edit-controls-row { flex-direction: column; align-items: stretch; }
   .edit-buttons { justify-content: flex-end; }
@@ -2098,13 +2108,28 @@ a { color: inherit; text-decoration: none; }
 }
 
 @media (max-width: 480px) {
-  .topbar { padding: 0 var(--sp-4); }
+  .topbar { padding: 0 var(--sp-3); }
   .nav-actions { gap: var(--sp-2); }
   .nav-user-meta { display: none; }
-  .nav-user-info { padding: 0; border: none; background: transparent; }
-  .dashboard-content { padding: 24px 16px 60px; gap: 20px; }
-  .status-tabs { width: 100%; }
+  .nav-user-info { padding: 0; border: none; background: transparent; gap: 0; }
+  .logout-button { padding: 0 10px; font-size: var(--text-xs); }
+
+  .dashboard-content { padding: 20px 14px 60px; gap: 18px; }
+
+  /* Input placeholder hint — hide the "(N)" keyboard shortcut on touch devices */
+  .creator-input::placeholder { font-size: var(--text-sm); }
+
+  /* Stack input + buttons: input fills row, buttons side-by-side below */
+  .creator-main-row { gap: 8px; }
+  .creator-input-wrap { width: 100%; flex: none; }
+  .creator-actions { width: 100%; gap: 8px; }
+  .btn-details-toggle { flex: 0 0 auto; padding: 0 10px; }
+  .creator-submit-btn { flex: 1; justify-content: center; display: flex; align-items: center; }
+
+  /* Toolbar tabs scroll horizontally */
+  .status-tabs { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .tab-btn { flex: 1; justify-content: center; }
   .search-wrap { min-width: 100%; }
+
   .toast { font-size: var(--text-xs); padding: 10px 12px; }
 }

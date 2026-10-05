@@ -455,7 +455,8 @@ export default function Dashboard({ navigate }) {
                   id="new-task-input"
                   type="text"
                   className="creator-input"
-                  placeholder="What would you like to achieve? (N)"
+                  placeholder="What would you like to achieve?"
+                  title="New task (press N to focus from anywhere)"
                   value={newTitle}
                   onChange={(e) => {
                     setNewTitle(e.target.value)
