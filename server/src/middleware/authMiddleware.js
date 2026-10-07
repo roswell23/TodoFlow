@@ -3,9 +3,9 @@ const { prisma } = require('../db')
 
 const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization']
-  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null
+  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null
 
-  if (!token) {
+  if (!token || token === 'null' || token === 'undefined') {
     return res.status(401).json({ message: 'Authentication required. No token provided.' })
   }
 

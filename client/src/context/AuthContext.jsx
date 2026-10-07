@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { authService } from '../services/authService'
 
 const AuthContext = createContext(null)
@@ -7,15 +7,32 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  const handleUnauthorized = useCallback(() => {
+    authService.clearToken()
+    setUser(null)
+  }, [])
+
+  // Listen for 401 unauthorized events dispatched from API services
   useEffect(() => {
-    if (!authService.getToken()) {
+    window.addEventListener('auth:unauthorized', handleUnauthorized)
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized)
+  }, [handleUnauthorized])
+
+  // Hydrate auth session on initial app load
+  useEffect(() => {
+    const token = authService.getToken()
+    if (!token) {
       setLoading(false)
       return
     }
+
     authService
       .me()
       .then(setUser)
-      .catch(() => authService.clearToken())
+      .catch(() => {
+        authService.clearToken()
+        setUser(null)
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -25,8 +42,12 @@ export function AuthProvider({ children }) {
   }
 
   const logout = async () => {
-    await authService.logout()
-    setUser(null)
+    try {
+      await authService.logout()
+    } finally {
+      authService.clearToken()
+      setUser(null)
+    }
   }
 
   return (

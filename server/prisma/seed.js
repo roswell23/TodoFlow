@@ -6,7 +6,7 @@ async function main() {
 
   const adminEmail = 'cryefionacruz@gmail.com'
   const adminPasswordPlain = 'roswellcruz23'
-  const adminName = 'TodoFlow Admin'
+  const adminName = 'Roswell Cruz'
 
   const hashedPassword = await bcrypt.hash(adminPasswordPlain, 10)
 

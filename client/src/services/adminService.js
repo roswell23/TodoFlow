@@ -2,28 +2,53 @@ const API_URL = import.meta.env.VITE_API_URL ||
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:4000/api'
     : 'https://todoflow-ymps.onrender.com/api')
+
 const TOKEN_KEY = 'todoflow_token'
 
-const getHeaders = () => {
-  const token = localStorage.getItem(TOKEN_KEY)
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+const getToken = () => {
+  try {
+    const token = localStorage.getItem(TOKEN_KEY)
+    if (!token || token === 'null' || token === 'undefined' || token.trim() === '') {
+      return null
+    }
+    return token.trim()
+  } catch {
+    return null
   }
+}
+
+const getHeaders = (customHeaders = {}) => {
+  const token = getToken()
+  const headers = {
+    'Content-Type': 'application/json',
+    ...customHeaders,
+  }
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  } else {
+    delete headers['Authorization']
+  }
+  return headers
 }
 
 async function request(endpoint, options = {}) {
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
-    headers: {
-      ...getHeaders(),
-      ...(options.headers || {}),
-    },
+    headers: getHeaders(options.headers),
   })
 
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok) {
+    if (response.status === 401) {
+      try {
+        localStorage.removeItem(TOKEN_KEY)
+        sessionStorage.removeItem(TOKEN_KEY)
+      } catch {}
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth:unauthorized'))
+      }
+    }
     throw new Error(data.message || 'An error occurred during the admin request.')
   }
 

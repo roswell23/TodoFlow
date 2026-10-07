@@ -46,10 +46,12 @@ const authLimiter = rateLimit({
 app.use('/api/auth/login', authLimiter)
 app.use('/api/auth/signup', authLimiter)
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
+// Health check endpoint (both /health and /api/health work)
+const healthHandler = (req, res) => {
   res.status(200).json({ status: 'ok', uptime: process.uptime() })
-})
+}
+app.get('/health', healthHandler)
+app.get('/api/health', healthHandler)
 
 // Routes
 app.use('/api/auth', authRoutes)
