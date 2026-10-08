@@ -1,26 +1,66 @@
-# React + Vite
+# TodoFlow — Web Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The frontend for **TodoFlow**, a high-performance single-page task management application built with **React 19**, **Vite 8**, and **Vanilla CSS**.
 
-Currently, two official plugins are available:
+For the complete project documentation, system architecture, and API specifications, see the [Root README](../README.md).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 🛠️ Tech Stack & Highlights
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **React 19**: Declarative UI leveraging hooks and context providers (`AuthContext`, `ThemeContext`).
+- **Vite 8**: Ultra-fast hot module replacement (HMR) and optimized rollup production bundles.
+- **Pure CSS Variables**: Lightweight custom design system supporting seamless light/dark/system theme switching with zero flash of unstyled content (FOUC).
+- **Native History Routing**: Zero-dependency router utilizing the HTML5 History API (`window.history.pushState` and `popstate`) for lightweight client-side navigation.
+- **Oxlint**: Fast Rust-based linter enforcing clean code standards.
 
-## Expanding the Oxlint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
-# TodoFlow
+## 🚀 Quick Start
 
-## Run locally
+### 1. Install dependencies
+```bash
+npm install
+```
 
-1. Copy `.env.example` to `.env` and set `DATABASE_URL` and a private `JWT_SECRET`.
-2. Run `npm install`, then `npm run db:generate` and `npm run db:migrate`.
-3. Start the API with `npm run server`.
-4. In another terminal, start Vite with `npm run dev`.
+### 2. Configure environment
+```bash
+cp .env.example .env
+```
 
-The API exposes `POST /api/auth/signup`, `POST /api/auth/login`, `GET /api/auth/me`, and `POST /api/auth/logout`. Passwords are stored only as bcrypt hashes; no email or SMTP service is used.
+| Variable | Description | Default |
+|---|---|---|
+| `VITE_API_URL` | Base API endpoint | Automatically resolves to `http://localhost:4000/api` on local development |
+
+### 3. Run development server
+```bash
+npm run dev
+```
+Access the application at `http://localhost:5173`.
+
+---
+
+## 📜 Available Scripts
+
+| Command | Action |
+|---|---|
+| `npm run dev` | Starts the Vite dev server with instant HMR |
+| `npm run build` | Builds the production bundle into `dist/` |
+| `npm run lint` | Runs Oxlint to inspect code quality |
+| `npm run preview` | Locally previews the production build |
+
+---
+
+## 📁 Source Layout
+
+```text
+src/
+├── assets/          # Static assets and icons
+├── components/      # Modular UI components (Navbar, TodoItem, ThemeToggle, AdminLayout)
+├── context/         # AuthContext and ThemeContext state providers
+├── pages/           # Application views (Dashboard, Login, Signup, admin/*)
+├── services/        # Fetch service adapters (authService, todoService, adminService)
+├── App.jsx          # Client router and route guards
+├── index.css        # Design tokens and responsive styles
+└── main.jsx         # App mounting point with providers
+```
