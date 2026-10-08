@@ -12,6 +12,7 @@
 [![License](https://img.shields.io/badge/License-ISC-blue?style=for-the-badge)](LICENSE)
 
 <p align="center">
+  <a href="#-app-preview">Preview</a> •
   <a href="#-features">Features</a> •
   <a href="#-system-architecture">Architecture</a> •
   <a href="#-tech-stack">Tech Stack</a> •
@@ -25,6 +26,39 @@
 </div>
 
 ---
+
+## 📸 App Preview
+
+<div align="center">
+
+### 🖥️ Workspace Dashboard
+*Clean, distraction-free workspace with quick starters, priority tags, and real-time completion analytics.*
+
+<br/>
+
+<img src="docs/screenshots/dashboard.png" alt="TodoFlow Workspace Dashboard" width="95%" />
+
+<br/><br/>
+
+### 🔐 Seamless Onboarding & Authentication
+*Minimalist split-screen authentication experience featuring custom dark/light theme integration.*
+
+<br/>
+
+<table align="center" width="95%">
+  <tr>
+    <td align="center" width="50%">
+      <sub><b>Sign In</b></sub><br/><br/>
+      <img src="docs/screenshots/login.png" alt="TodoFlow Sign In" width="100%" />
+    </td>
+    <td align="center" width="50%">
+      <sub><b>Create Account</b></sub><br/><br/>
+      <img src="docs/screenshots/signup.png" alt="TodoFlow Sign Up" width="100%" />
+    </td>
+  </tr>
+</table>
+
+</div>
 
 ## 🌟 Overview
 
