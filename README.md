@@ -246,9 +246,7 @@ cd TodoFlow
    ```bash
    npm run db:seed
    ```
-   > **Note:** The seed script provisions an initial admin account:  
-   > **Email:** `cryefionacruz@gmail.com`  
-   > **Password:** `roswellcruz23`
+   > **Tip:** You can optionally configure `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `ADMIN_NAME` in your `server/.env` prior to running the seed script. If omitted, default development credentials will be used.
 
 6. Start the API server:
    ```bash

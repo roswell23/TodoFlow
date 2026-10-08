@@ -4,9 +4,9 @@ const { prisma } = require('../src/db')
 async function main() {
   console.log('Seeding dummy admin account...')
 
-  const adminEmail = 'cryefionacruz@gmail.com'
-  const adminPasswordPlain = 'roswellcruz23'
-  const adminName = 'Roswell Cruz'
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@todoflow.local'
+  const adminPasswordPlain = process.env.ADMIN_PASSWORD || 'Admin@12345'
+  const adminName = process.env.ADMIN_NAME || 'TodoFlow Admin'
 
   const hashedPassword = await bcrypt.hash(adminPasswordPlain, 10)
 
