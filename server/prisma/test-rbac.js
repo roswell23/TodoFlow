@@ -50,8 +50,8 @@ async function runTests() {
     // 1. Test Admin Login
     console.log('1. Testing Admin Login with dummy admin credentials...')
     const adminLoginRes = await request('/api/auth/login', 'POST', {
-      email: 'admin@todoflow.test',
-      password: 'Admin@12345',
+      email: process.env.ADMIN_EMAIL || 'admin@todoflow.local',
+      password: process.env.ADMIN_PASSWORD || 'Admin@12345',
     })
     if (adminLoginRes.status !== 200 || adminLoginRes.body.user?.role !== 'ADMIN') {
       throw new Error(`Admin login failed: ${JSON.stringify(adminLoginRes.body)}`)

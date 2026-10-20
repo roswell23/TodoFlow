@@ -28,6 +28,28 @@ async function main() {
   `)
   console.log('✔ Column "users.isActive" verified.')
 
+  // 4. Create subtasks table if not exists
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "subtasks" (
+      "id" TEXT NOT NULL,
+      "todoId" TEXT NOT NULL,
+      "title" TEXT NOT NULL,
+      "completed" BOOLEAN NOT NULL DEFAULT false,
+      "order" INTEGER NOT NULL DEFAULT 0,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "subtasks_pkey" PRIMARY KEY ("id"),
+      CONSTRAINT "subtasks_todoId_fkey" FOREIGN KEY ("todoId") REFERENCES "todos"("id") ON DELETE CASCADE ON UPDATE CASCADE
+    );
+  `)
+  await prisma.$executeRawUnsafe(`
+    CREATE INDEX IF NOT EXISTS "subtasks_todoId_idx" ON "subtasks"("todoId");
+  `)
+  await prisma.$executeRawUnsafe(`
+    CREATE INDEX IF NOT EXISTS "subtasks_todoId_order_idx" ON "subtasks"("todoId", "order");
+  `)
+  console.log('✔ Table "subtasks" and indexes verified.')
+
   console.log('All database migrations applied safely without data loss!')
 }
 

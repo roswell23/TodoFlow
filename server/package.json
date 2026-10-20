@@ -12,6 +12,7 @@
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js",
     "test:rbac": "node prisma/test-rbac.js",
+    "test:subtasks": "node prisma/test-subtasks.js",
     "postinstall": "prisma generate || exit 0"
   },
   "prisma": {

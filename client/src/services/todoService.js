@@ -102,11 +102,12 @@ export const todoService = {
   },
 
   /**
-   * Toggle completion status
+   * Toggle completion status (with optional completeSubtasks flag)
    */
-  async toggleTodo(id) {
+  async toggleTodo(id, completeSubtasks = false) {
     const res = await request(`/todos/${id}/toggle`, {
       method: 'PATCH',
+      body: JSON.stringify({ completeSubtasks }),
     })
     return res.todo
   },
@@ -127,5 +128,47 @@ export const todoService = {
     return await request('/todos/completed', {
       method: 'DELETE',
     })
+  },
+
+  /**
+   * Create a subtask for a specific task
+   */
+  async createSubtask(todoId, subtaskData) {
+    const res = await request(`/todos/${todoId}/subtasks`, {
+      method: 'POST',
+      body: JSON.stringify(subtaskData),
+    })
+    return res.subtask
+  },
+
+  /**
+   * Update subtask details (title, completed, or order)
+   */
+  async updateSubtask(todoId, subtaskId, updates) {
+    const res = await request(`/todos/${todoId}/subtasks/${subtaskId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    })
+    return res.subtask
+  },
+
+  /**
+   * Delete a subtask
+   */
+  async deleteSubtask(todoId, subtaskId) {
+    return await request(`/todos/${todoId}/subtasks/${subtaskId}`, {
+      method: 'DELETE',
+    })
+  },
+
+  /**
+   * Reorder subtasks
+   */
+  async reorderSubtasks(todoId, subtaskIds) {
+    const res = await request(`/todos/${todoId}/subtasks/reorder`, {
+      method: 'PUT',
+      body: JSON.stringify({ subtaskIds }),
+    })
+    return res.subtasks
   },
 }
