@@ -737,7 +737,7 @@ export default function Dashboard({ navigate }) {
 
           <div className="progress-card" aria-label="Progress overview">
             <div className="progress-card-top">
-              <div>
+              <div className="progress-info">
                 <span className="progress-label">Today's Progress</span>
                 <p className="progress-message">{getProgressMessage(stats.completionRate, stats.total)}</p>
               </div>

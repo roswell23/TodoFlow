@@ -917,8 +917,8 @@ a { color: inherit; text-decoration: none; }
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   padding: 16px 18px;
-  min-width: 200px;
-  max-width: 220px;
+  min-width: 250px;
+  max-width: 280px;
   box-shadow: var(--shadow-sm);
 }
 
@@ -926,8 +926,13 @@ a { color: inherit; text-decoration: none; }
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 10px;
+}
+
+.progress-info {
+  min-width: 0;
+  flex: 1;
 }
 
 .progress-label {
@@ -956,6 +961,7 @@ a { color: inherit; text-decoration: none; }
 
 .celebration-badge {
   font-size: 1.15rem;
+  line-height: 1;
   animation: bounceCelebration 1.2s infinite ease-in-out;
   display: inline-block;
 }
@@ -970,6 +976,7 @@ a { color: inherit; text-decoration: none; }
   font-weight: 700;
   color: var(--text);
   letter-spacing: -.02em;
+  line-height: 1.1;
   flex-shrink: 0;
   white-space: nowrap;
 }
@@ -3186,7 +3193,11 @@ a { color: inherit; text-decoration: none; }
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  .progress-card { min-width: unset; }
+  .progress-card {
+    min-width: unset;
+    max-width: 100%;
+    width: 100%;
+  }
 
   .dashboard-header h1 { font-size: var(--text-2xl); }
 
