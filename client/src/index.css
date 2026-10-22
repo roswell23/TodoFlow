@@ -3052,6 +3052,11 @@ a { color: inherit; text-decoration: none; }
   }
 }
 
+/* Mobile Quick Add Floating Action Button (hidden on desktop web) */
+.mobile-quick-add-fab {
+  display: none;
+}
+
 /* ─── Toast (Undo delete) ─────────────────────────────────────────── */
 .toast-container {
   position: fixed;
