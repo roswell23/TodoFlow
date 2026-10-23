@@ -5,6 +5,8 @@ import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import VerifyEmail from './pages/VerifyEmail'
+import ForgotPassword from './pages/ForgotPassword'
 import Dashboard from './pages/Dashboard'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminUsers from './pages/admin/AdminUsers'
@@ -15,21 +17,32 @@ const currentPath = () => window.location.pathname.replace(/\/$/, '') || '/login
 export default function App() {
   const { user, loading } = useAuth()
   const [path, setPath] = useState(currentPath())
+  const [routeState, setRouteState] = useState(() => {
+    try {
+      return window.history.state || {}
+    } catch {
+      return {}
+    }
+  })
 
-  const navigate = (next) => {
-    window.history.pushState({}, '', next)
+  const navigate = (next, state = {}) => {
+    window.history.pushState(state, '', next)
+    setRouteState(state || {})
     setPath(next)
   }
 
   useEffect(() => {
-    const onPop = () => setPath(currentPath())
+    const onPop = () => {
+      setPath(currentPath())
+      setRouteState(window.history.state || {})
+    }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
   }, [])
 
   // Redirect authenticated users away from auth pages (via effect, not render)
   useEffect(() => {
-    if (!loading && user && (path === '/login' || path === '/signup')) {
+    if (!loading && user && (path === '/login' || path === '/signup' || path === '/verify-email' || path === '/forgot-password')) {
       if (user.role === 'ADMIN') {
         navigate('/admin')
       } else {
@@ -75,6 +88,8 @@ export default function App() {
   }
 
   if (path === '/signup') return <Signup navigate={navigate} />
+  if (path === '/verify-email') return <VerifyEmail navigate={navigate} initialEmail={routeState?.email || ''} />
+  if (path === '/forgot-password') return <ForgotPassword navigate={navigate} initialEmail={routeState?.email || ''} />
 
   return <Login navigate={navigate} />
 }

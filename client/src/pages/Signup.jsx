@@ -1,58 +1,58 @@
 import { useState } from 'react'
 import { authService } from '../services/authService'
-
-function Field({ id, label, type = 'text', value, onChange, placeholder, autoComplete, canReveal = false }) {
-  const [revealed, setRevealed] = useState(false)
-  const inputType = canReveal && revealed ? 'text' : type
-
-  return (
-    <label className="field" htmlFor={id}>
-      <span>{label}</span>
-      <div className="password-input-wrap">
-        <input
-          id={id}
-          type={inputType}
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          autoComplete={autoComplete}
-          required
-        />
-        {canReveal && (
-          <button
-            type="button"
-            className="password-toggle"
-            onClick={() => setRevealed(!revealed)}
-            aria-label={revealed ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
-            aria-pressed={revealed}
-          >
-            {revealed ? 'Hide' : 'Show'}
-          </button>
-        )}
-      </div>
-    </label>
-  )
-}
+import AuthBranding from '../components/AuthBranding'
+import AuthField from '../components/AuthField'
+import ThemeToggle from '../components/ThemeToggle'
 
 export default function Signup({ navigate }) {
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' })
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  })
+  const [fieldErrors, setFieldErrors] = useState({})
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
-  const update = (key) => (e) => setForm({ ...form, [key]: e.target.value })
+  const update = (key) => (e) => {
+    setForm({ ...form, [key]: e.target.value })
+    if (fieldErrors[key]) {
+      setFieldErrors((prev) => ({ ...prev, [key]: '' }))
+    }
+  }
 
   const submit = async (e) => {
     e.preventDefault()
     setError('')
 
-    if (!form.name.trim()) return setError('Please enter your name.')
-    if (form.password.length < 8) return setError('Password must be at least 8 characters.')
-    if (form.password !== form.confirmPassword) return setError('Passwords do not match.')
+    const errs = {}
+    if (!form.name.trim()) {
+      errs.name = 'Please enter your full name.'
+    }
+    if (!form.email.trim()) {
+      errs.email = 'Please enter your email address.'
+    }
+    if (form.password.length < 8) {
+      errs.password = 'Password must be at least 8 characters.'
+    }
+    if (form.password !== form.confirmPassword) {
+      errs.confirmPassword = 'Passwords do not match.'
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs)
+      return
+    }
 
     setBusy(true)
     try {
       await authService.signup(form)
-      navigate('/login')
+      const cleanEmail = form.email.toLowerCase().trim()
+      try {
+        sessionStorage.setItem('todoflow_verify_email', cleanEmail)
+      } catch {}
+      navigate('/verify-email', { email: cleanEmail })
     } catch (err) {
       setError(err.message)
     } finally {
@@ -62,72 +62,99 @@ export default function Signup({ navigate }) {
 
   return (
     <main className="auth-layout">
-      <section className="brand-panel" aria-hidden="true">
-        <div className="brand-mark">✓</div>
-        <p className="brand-name">TodoFlow</p>
-        <h1>Make space for<br /><em>what matters.</em></h1>
-        <p className="brand-copy">A calmer way to organize your day, one task at a time.</p>
-        <div className="brand-decoration"><span /><span /><span /></div>
-      </section>
+      {/* Theme Switcher */}
+      <div className="auth-theme-toggle-wrap">
+        <ThemeToggle />
+      </div>
 
-      <section className="form-panel">
-        <div className="form-wrap">
-          <p className="eyebrow">Get started</p>
-          <h2>Create your account</h2>
+      {/* Left Branding Panel */}
+      <AuthBranding />
+
+      {/* Right Registration Panel */}
+      <section className="form-panel" aria-label="Sign Up Form">
+        <div className="form-wrap auth-signup-wrap">
+          <p className="eyebrow">GET STARTED</p>
+          <h2 className="form-title">Create your account</h2>
           <p className="form-subtitle">A little more focus, a lot less friction.</p>
 
           <form onSubmit={submit} className="auth-form" noValidate>
-            {error && <div className="alert" role="alert">{error}</div>}
-            <Field
+            {error && (
+              <div className="alert" role="alert">
+                {error}
+              </div>
+            )}
+
+            <AuthField
               id="signup-name"
               label="Full name"
+              icon="user"
               value={form.name}
               onChange={update('name')}
-              placeholder="Alex Morgan"
+              placeholder="John Doe"
               autoComplete="name"
+              error={fieldErrors.name}
+              required
             />
-            <Field
+
+            <AuthField
               id="signup-email"
               label="Email address"
               type="email"
+              icon="email"
               value={form.email}
               onChange={update('email')}
               placeholder="you@example.com"
               autoComplete="email"
+              error={fieldErrors.email}
+              required
             />
-            <Field
+
+            <AuthField
               id="signup-password"
               label="Password"
               type="password"
+              icon="lock"
               value={form.password}
               onChange={update('password')}
               placeholder="At least 8 characters"
               autoComplete="new-password"
               canReveal
+              error={fieldErrors.password}
+              required
             />
-            <Field
+
+            <AuthField
               id="signup-confirm"
               label="Confirm password"
               type="password"
+              icon="lock"
               value={form.confirmPassword}
               onChange={update('confirmPassword')}
               placeholder="Repeat your password"
               autoComplete="new-password"
               canReveal
+              error={fieldErrors.confirmPassword}
+              required
             />
+
             <button
               id="signup-submit-btn"
               type="submit"
               className="primary-button"
               disabled={busy}
             >
-              {busy ? 'Creating account…' : 'Create account'} <span>→</span>
+              <span>{busy ? 'Creating account…' : 'Create account'}</span>
+              <span className="btn-arrow" aria-hidden="true">→</span>
             </button>
           </form>
 
           <p className="switch-copy">
             Already have an account?{' '}
-            <button className="text-button" onClick={() => navigate('/login')}>
+            <button
+              type="button"
+              className="auth-switch-link"
+              onClick={() => navigate('/login')}
+            >
               Log in
             </button>
           </p>

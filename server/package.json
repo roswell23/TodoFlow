@@ -13,6 +13,7 @@
     "db:seed": "node prisma/seed.js",
     "test:rbac": "node prisma/test-rbac.js",
     "test:subtasks": "node prisma/test-subtasks.js",
+    "test:verification": "node prisma/test-verification.js",
     "postinstall": "prisma generate || exit 0"
   },
   "prisma": {
@@ -23,6 +24,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@getbrevo/brevo": "^6.2.0",
     "@neondatabase/serverless": "^1.1.0",
     "@prisma/adapter-neon": "^7.10.0",
     "@prisma/client": "^7.10.0",

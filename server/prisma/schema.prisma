@@ -20,12 +20,32 @@ model User {
   email     String   @unique
   password  String
   role      Role     @default(USER)
-  isActive  Boolean  @default(true)
-  todos     Todo[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isActive          Boolean            @default(true)
+  isEmailVerified   Boolean            @default(false)
+  todos             Todo[]
+  verificationCodes VerificationCode[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
 
   @@map("users")
+}
+
+model VerificationCode {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email      String?
+  purpose    String   // EMAIL_VERIFICATION or PASSWORD_RESET
+  codeHash   String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastSentAt DateTime @default(now())
+  sendCount  Int      @default(1)
+  used       Boolean  @default(false)
+
+  @@index([userId, purpose])
+  @@index([email])
+  @@map("verification_codes")
 }
 
 model Todo {

@@ -50,6 +50,23 @@ async function main() {
   `)
   console.log('✔ Table "subtasks" and indexes verified.')
 
+  // 5. Add isEmailVerified column to users table if not exists
+  await prisma.$executeRawUnsafe(`
+    ALTER TABLE "users" 
+    ADD COLUMN IF NOT EXISTS "isEmailVerified" BOOLEAN NOT NULL DEFAULT false;
+  `)
+  console.log('✔ Column "users.isEmailVerified" verified.')
+
+  // 6. Ensure verification_codes table has email column & index
+  await prisma.$executeRawUnsafe(`
+    ALTER TABLE "verification_codes" 
+    ADD COLUMN IF NOT EXISTS "email" TEXT;
+  `)
+  await prisma.$executeRawUnsafe(`
+    CREATE INDEX IF NOT EXISTS "verification_codes_email_idx" ON "verification_codes"("email");
+  `)
+  console.log('✔ Table "verification_codes" email column and index verified.')
+
   console.log('All database migrations applied safely without data loss!')
 }
 

@@ -1,39 +1,9 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { authService } from '../services/authService'
-
-function Field({ id, label, type = 'text', value, onChange, placeholder, autoComplete }) {
-  const [revealed, setRevealed] = useState(false)
-  const isPassword = type === 'password'
-
-  return (
-    <label className="field" htmlFor={id}>
-      <span>{label}</span>
-      <div className="password-input-wrap">
-        <input
-          id={id}
-          type={isPassword && revealed ? 'text' : type}
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          autoComplete={autoComplete}
-          required
-        />
-        {isPassword && (
-          <button
-            type="button"
-            className="password-toggle"
-            onClick={() => setRevealed(!revealed)}
-            aria-label={revealed ? 'Hide password' : 'Show password'}
-            aria-pressed={revealed}
-          >
-            {revealed ? 'Hide' : 'Show'}
-          </button>
-        )}
-      </div>
-    </label>
-  )
-}
+import AuthBranding from '../components/AuthBranding'
+import AuthField from '../components/AuthField'
+import ThemeToggle from '../components/ThemeToggle'
 
 export default function Login({ navigate }) {
   const { login } = useAuth()
@@ -45,6 +15,16 @@ export default function Login({ navigate }) {
   const submit = async (e) => {
     e.preventDefault()
     setError('')
+
+    if (!email.trim()) {
+      setError('Please enter your email address.')
+      return
+    }
+    if (!password) {
+      setError('Please enter your password.')
+      return
+    }
+
     setBusy(true)
     try {
       const result = await authService.login({ email, password })
@@ -59,53 +39,82 @@ export default function Login({ navigate }) {
 
   return (
     <main className="auth-layout">
-      <section className="brand-panel" aria-hidden="true">
-        <div className="brand-mark">✓</div>
-        <p className="brand-name">TodoFlow</p>
-        <h1>Make space for<br /><em>what matters.</em></h1>
-        <p className="brand-copy">A calmer way to organize your day, one task at a time.</p>
-        <div className="brand-decoration"><span /><span /><span /></div>
-      </section>
+      {/* Theme Switcher */}
+      <div className="auth-theme-toggle-wrap">
+        <ThemeToggle />
+      </div>
 
-      <section className="form-panel">
+      {/* Left Branding Panel */}
+      <AuthBranding />
+
+      {/* Right Login Panel */}
+      <section className="form-panel" aria-label="Login Form">
         <div className="form-wrap">
-          <p className="eyebrow">Welcome back</p>
-          <h2>Log in to TodoFlow</h2>
+          <p className="eyebrow">WELCOME BACK</p>
+          <h2 className="form-title">Log in to TodoFlow</h2>
           <p className="form-subtitle">Pick up right where you left off.</p>
 
           <form onSubmit={submit} className="auth-form" noValidate>
-            {error && <div className="alert" role="alert">{error}</div>}
-            <Field
+            {error && (
+              <div className="alert" role="alert">
+                {error}
+              </div>
+            )}
+
+            <AuthField
               id="login-email"
               label="Email address"
               type="email"
+              icon="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               autoComplete="email"
+              required
             />
-            <Field
-              id="login-password"
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              autoComplete="current-password"
-            />
+
+            <div className="field-group">
+              <AuthField
+                id="login-password"
+                label="Password"
+                type="password"
+                icon="lock"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                autoComplete="current-password"
+                canReveal
+                required
+              />
+              <div className="forgot-password-wrap">
+                <button
+                  type="button"
+                  className="auth-forgot-link"
+                  onClick={() => navigate('/forgot-password', { email })}
+                >
+                  Forgot password?
+                </button>
+              </div>
+            </div>
+
             <button
               id="login-submit-btn"
               type="submit"
               className="primary-button"
               disabled={busy}
             >
-              {busy ? 'Logging in…' : 'Log in'} <span>→</span>
+              <span>{busy ? 'Logging in…' : 'Log in'}</span>
+              <span className="btn-arrow" aria-hidden="true">→</span>
             </button>
           </form>
 
           <p className="switch-copy">
             Don&apos;t have an account?{' '}
-            <button className="text-button" onClick={() => navigate('/signup')}>
+            <button
+              type="button"
+              className="auth-switch-link"
+              onClick={() => navigate('/signup')}
+            >
               Sign up
             </button>
           </p>

@@ -268,13 +268,25 @@ cd TodoFlow
 
    # Client origin allowed by CORS
    CLIENT_URL="http://localhost:5173"
+
+   # Brevo Transactional Email (Verification Codes & Password Resets)
+   BREVO_API_KEY="xkeysib-your-brevo-api-key"
+   BREVO_SENDER_EMAIL="verify@yourdomain.com"
+   BREVO_SENDER_NAME="TodoFlow"
    ```
 
 4. Push the Prisma schema to your database & generate the client:
    ```bash
    npm run db:generate
-   npm run db:push
+   node prisma/apply-schema.js
    ```
+
+#### 📧 Configuring Brevo Transactional Email
+1. **Get a Brevo API Key**: Register or log into [Brevo](https://www.brevo.com/), go to **SMTP & API** &rarr; **API Keys**, click **Generate a new API key**, and set `BREVO_API_KEY` in `server/.env`.
+2. **Verify Sender**: In Brevo, go to **Senders, Domains & Dedicated IPs** &rarr; **Senders**, add and verify your sender address, then set `BREVO_SENDER_EMAIL` and `BREVO_SENDER_NAME`.
+3. **Local Testing**:
+   - If `BREVO_API_KEY` is omitted, the server operates in safe simulation mode, logging simulated email deliveries without crashing.
+   - Run `npm run test:verification` to verify SHA-256 hashed code storage, 10-minute expiration, 60s cooldown, and anti-enumeration protection.
 
 5. *(Optional)* Seed the default Administrator account:
    ```bash
@@ -395,7 +407,7 @@ All protected endpoints require the header: `Authorization: Bearer <token>`
 | `GET` | `/api/admin/stats` | Admin | Aggregate platform metrics (users, active, todos, rate) |
 | `GET` | `/api/admin/users` | Admin | List all registered users with filter/search queries |
 | `GET` | `/api/admin/users/:id` | Admin | Fetch user profile with complete task history |
-| `PATCH` | `/api/admin/users/:id/status` | Admin | Activate or deactivate user access (`isActive`) |
+| `PATCH` | `/api/admin/users/:id/status` | Admin | Enable or disable user account access (`isActive`) |
 | `DELETE` | `/api/admin/users/:id` | Admin | Permanently delete user and cascade all tasks |
 | `GET` | `/api/admin/todos` | Admin | List tasks across all users |
 | `DELETE` | `/api/admin/todos/:id` | Admin | Remove any task from the platform |
@@ -452,7 +464,7 @@ model Todo {
    - Strict body size limit (`20kb`) shields against payload flooding.
    - CORS origin validation rejects unverified cross-origin requests.
 2. **Account Integrity**:
-   - Deactivated users (`isActive: false`) are denied login even with correct credentials.
+   - Disabled accounts (`isActive: false`) are denied login even with correct credentials.
    - Sensitive password hashes are stripped before user payloads leave the API.
 3. **Data Isolation**:
    - Every database modification on `/api/todos` strictly filters by `userId` to eliminate Insecure Direct Object References (IDOR).
@@ -482,6 +494,9 @@ model Todo {
    - `DATABASE_URL_UNPOOLED`: Your Neon direct connection string
    - `JWT_SECRET`: Random 32+ character string
    - `CLIENT_URL`: Your production frontend URL (e.g. `https://usetodoflow.netlify.app`)
+   - `BREVO_API_KEY`: Your Brevo transactional API key
+   - `BREVO_SENDER_EMAIL`: Your verified Brevo sender email address
+   - `BREVO_SENDER_NAME`: Sender display name (e.g. `TodoFlow`)
 
 ---
 

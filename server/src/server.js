@@ -43,8 +43,21 @@ const authLimiter = rateLimit({
   message: { message: 'Too many authentication attempts. Please try again later.' },
 })
 
+const verificationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 15,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { message: 'Too many verification attempts. Please try again later.' },
+})
+
 app.use('/api/auth/login', authLimiter)
 app.use('/api/auth/signup', authLimiter)
+app.use('/api/auth/request-code', verificationLimiter)
+app.use('/api/auth/send-code', verificationLimiter)
+app.use('/api/auth/resend-code', verificationLimiter)
+app.use('/api/auth/verify-code', verificationLimiter)
+app.use('/api/auth/reset-password', verificationLimiter)
 
 // Health check endpoint (both /health and /api/health work)
 const healthHandler = (req, res) => {

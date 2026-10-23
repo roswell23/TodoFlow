@@ -65,7 +65,7 @@ export default function AdminDashboard({ navigate }) {
               <div className="admin-stat-card">
                 <div className="admin-stat-top">
                   <span className="admin-stat-label">Total Users</span>
-                  <span className="admin-stat-badge users">Active: {stats.activeUsers}</span>
+                  <span className="admin-stat-badge users">Enabled: {stats.activeUsers}</span>
                 </div>
                 <div className="admin-stat-number">{stats.totalUsers}</div>
                 <p className="admin-stat-desc">Registered platform accounts</p>
@@ -135,7 +135,7 @@ export default function AdminDashboard({ navigate }) {
                 <div className="admin-action-icon">👥</div>
                 <div className="admin-action-info">
                   <h3>User Management</h3>
-                  <p>Browse users, view roles, activate or deactivate accounts.</p>
+                  <p>Browse users, view roles, enable or disable accounts.</p>
                 </div>
                 <span className="admin-action-arrow">→</span>
               </div>

@@ -48,9 +48,9 @@ const getAdminUsers = async (req, res) => {
       }
     }
 
-    if (status === 'active') {
+    if (status === 'active' || status === 'enabled') {
       where.isActive = true
-    } else if (status === 'inactive') {
+    } else if (status === 'inactive' || status === 'disabled') {
       where.isActive = false
     }
 
@@ -126,7 +126,7 @@ const getAdminUserById = async (req, res) => {
 
 /**
  * PATCH /api/admin/users/:id/status
- * Activate or deactivate a user account.
+ * Enable or disable a user account access.
  */
 const toggleUserStatus = async (req, res) => {
   try {
@@ -137,9 +137,9 @@ const toggleUserStatus = async (req, res) => {
       return res.status(400).json({ message: 'Field "isActive" must be a boolean.' })
     }
 
-    // Safety guard: Admin cannot deactivate their own account
+    // Safety guard: Admin cannot disable their own account
     if (req.user.id === id) {
-      return res.status(400).json({ message: 'You cannot deactivate your own administrator account.' })
+      return res.status(400).json({ message: 'You cannot disable your own administrator account.' })
     }
 
     const targetUser = await prisma.user.findUnique({ where: { id } })
@@ -161,12 +161,12 @@ const toggleUserStatus = async (req, res) => {
     })
 
     return res.status(200).json({
-      message: `User ${isActive ? 'activated' : 'deactivated'} successfully.`,
+      message: `User ${isActive ? 'enabled' : 'disabled'} successfully.`,
       user: updated,
     })
   } catch (error) {
     console.error('toggleUserStatus error:', error)
-    return res.status(500).json({ message: 'Failed to update user status.' })
+    return res.status(500).json({ message: 'Failed to update user account status.' })
   }
 }
 

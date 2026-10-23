@@ -83,7 +83,10 @@ export const authService = {
           window.dispatchEvent(new CustomEvent('auth:unauthorized'))
         }
       }
-      throw new Error(data.message || 'Something went wrong. Please try again.')
+      const error = new Error(data.message || 'Something went wrong. Please try again.')
+      error.status = response.status
+      error.waitSeconds = data.waitSeconds
+      throw error
     }
 
     return data
@@ -91,6 +94,10 @@ export const authService = {
 
   signup: (body) => authService.request('/auth/signup', { method: 'POST', body: JSON.stringify(body) }),
   login: (body) => authService.request('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
+  requestCode: (body) => authService.request('/auth/request-code', { method: 'POST', body: JSON.stringify(body) }),
+  resendCode: (body) => authService.request('/auth/resend-code', { method: 'POST', body: JSON.stringify(body) }),
+  verifyCode: (body) => authService.request('/auth/verify-code', { method: 'POST', body: JSON.stringify(body) }),
+  resetPassword: (body) => authService.request('/auth/reset-password', { method: 'POST', body: JSON.stringify(body) }),
   me: async () => (await authService.request('/auth/me')).user,
 
   /**

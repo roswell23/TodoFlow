@@ -29,7 +29,7 @@ const authenticateToken = async (req, res, next) => {
     }
 
     if (!user.isActive) {
-      return res.status(403).json({ message: 'Account has been deactivated. Please contact an administrator.' })
+      return res.status(403).json({ message: 'Account has been disabled. Please contact an administrator.' })
     }
 
     req.user = user

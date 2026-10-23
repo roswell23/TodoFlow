@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const { prisma } = require('../db')
+const verificationService = require('../services/verificationService')
 
 const isValidEmail = (email) =>
   typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -52,20 +53,32 @@ const signup = async (req, res) => {
         password: hashedPassword,
         role: 'USER',
         isActive: true,
+        isEmailVerified: false,
       },
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
+        isEmailVerified: true,
         createdAt: true,
       },
     })
 
+    // Automatically send 6-digit email verification code via Brevo
+    verificationService
+      .requestVerificationCode({
+        email: normalizedEmail,
+        purpose: 'EMAIL_VERIFICATION',
+      })
+      .catch((err) => {
+        console.error('Failed to dispatch signup verification email:', err.message || err)
+      })
+
     const token = generateToken(user)
 
     return res.status(201).json({
-      message: 'Account created successfully.',
+      message: 'Account created successfully. A verification code has been sent to your email.',
       user,
       token,
     })
@@ -99,7 +112,7 @@ const login = async (req, res) => {
     }
 
     if (!user.isActive) {
-      return res.status(403).json({ message: 'Your account has been deactivated. Please contact an administrator.' })
+      return res.status(403).json({ message: 'Your account has been disabled. Please contact an administrator.' })
     }
 
     const isMatch = await bcrypt.compare(password, user.password)
@@ -116,6 +129,7 @@ const login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        isEmailVerified: user.isEmailVerified,
         createdAt: user.createdAt,
       },
       token,
@@ -123,6 +137,152 @@ const login = async (req, res) => {
   } catch (error) {
     console.error('Login error:', error)
     return res.status(500).json({ message: 'Failed to log in. Please try again.' })
+  }
+}
+
+// POST /api/auth/request-code (and /send-code)
+const requestCode = async (req, res) => {
+  try {
+    const { email, purpose, type } = req.body
+    const targetPurpose = purpose || type || 'EMAIL_VERIFICATION'
+
+    if (!email || typeof email !== 'string' || !isValidEmail(email.trim())) {
+      return res.status(400).json({ message: 'A valid email address is required.' })
+    }
+
+    if (!['EMAIL_VERIFICATION', 'PASSWORD_RESET'].includes(targetPurpose)) {
+      return res.status(400).json({ message: 'Invalid verification purpose.' })
+    }
+
+    await verificationService.requestVerificationCode({
+      email: email.trim(),
+      purpose: targetPurpose,
+      isResend: false,
+    })
+
+    // Strict Anti-Enumeration: Always return the identical 200 message regardless of whether email exists
+    return res.status(200).json({
+      message: 'If an account exists with this email, a verification code has been sent.',
+    })
+  } catch (error) {
+    console.error('Request code error:', error.message || error)
+    return res.status(500).json({ message: 'Unable to process verification request at this time.' })
+  }
+}
+
+// POST /api/auth/resend-code
+const resendCode = async (req, res) => {
+  try {
+    const { email, purpose, type } = req.body
+    const targetPurpose = purpose || type || 'EMAIL_VERIFICATION'
+
+    if (!email || typeof email !== 'string' || !isValidEmail(email.trim())) {
+      return res.status(400).json({ message: 'A valid email address is required.' })
+    }
+
+    if (!['EMAIL_VERIFICATION', 'PASSWORD_RESET'].includes(targetPurpose)) {
+      return res.status(400).json({ message: 'Invalid verification purpose.' })
+    }
+
+    const result = await verificationService.requestVerificationCode({
+      email: email.trim(),
+      purpose: targetPurpose,
+      isResend: true,
+    })
+
+    if (result.cooldownActive) {
+      return res.status(429).json({
+        message: result.message,
+        waitSeconds: result.cooldownWait,
+      })
+    }
+
+    // Strict Anti-Enumeration: generic response
+    return res.status(200).json({
+      message: 'If an account exists with this email, a verification code has been sent.',
+    })
+  } catch (error) {
+    console.error('Resend code error:', error.message || error)
+    return res.status(500).json({ message: 'Unable to process resend request at this time.' })
+  }
+}
+
+// POST /api/auth/verify-code
+const verifyCode = async (req, res) => {
+  try {
+    const { email, code, purpose, type } = req.body
+    const targetPurpose = purpose || type || 'EMAIL_VERIFICATION'
+
+    if (!email || !code || typeof email !== 'string' || typeof code !== 'string') {
+      return res.status(400).json({ message: 'Email and 6-digit code are required.' })
+    }
+
+    const cleanCode = code.trim()
+    if (!/^\d{6}$/.test(cleanCode)) {
+      return res.status(400).json({ message: 'Verification code must be exactly 6 digits.' })
+    }
+
+    const result = await verificationService.verifyCode({
+      email: email.trim(),
+      code: cleanCode,
+      purpose: targetPurpose,
+    })
+
+    if (!result.success) {
+      return res.status(400).json({ message: result.message || 'Invalid or expired verification code.' })
+    }
+
+    return res.status(200).json({
+      message: 'Verification code successfully verified.',
+      verified: true,
+      user: result.user,
+    })
+  } catch (error) {
+    console.error('Verify code error:', error.message || error)
+    return res.status(500).json({ message: 'Failed to verify code. Please try again.' })
+  }
+}
+
+// POST /api/auth/reset-password
+const resetPassword = async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body
+
+    if (!email || !code || !newPassword || typeof email !== 'string' || typeof code !== 'string' || typeof newPassword !== 'string') {
+      return res.status(400).json({ message: 'Email, code, and new password are required.' })
+    }
+
+    if (newPassword.length < 8 || newPassword.length > 128) {
+      return res.status(400).json({ message: 'Password must be between 8 and 128 characters long.' })
+    }
+
+    // Verify 6-digit code for PASSWORD_RESET purpose
+    const verificationResult = await verificationService.verifyCode({
+      email: email.trim(),
+      code: code.trim(),
+      purpose: 'PASSWORD_RESET',
+    })
+
+    if (!verificationResult.success || !verificationResult.user) {
+      return res.status(400).json({ message: verificationResult.message || 'Invalid or expired verification code.' })
+    }
+
+    // Hash new password and update user record
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+    await prisma.user.update({
+      where: { id: verificationResult.user.id },
+      data: {
+        password: hashedPassword,
+        isEmailVerified: true,
+      },
+    })
+
+    return res.status(200).json({
+      message: 'Password has been reset successfully. You can now log in with your new password.',
+    })
+  } catch (error) {
+    console.error('Reset password error:', error.message || error)
+    return res.status(500).json({ message: 'Failed to reset password. Please try again.' })
   }
 }
 
@@ -151,4 +311,8 @@ module.exports = {
   login,
   me,
   logout,
+  requestCode,
+  resendCode,
+  verifyCode,
+  resetPassword,
 }

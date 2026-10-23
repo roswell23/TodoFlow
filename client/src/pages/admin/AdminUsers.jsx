@@ -47,7 +47,7 @@ export default function AdminUsers({ navigate }) {
 
   const handleToggleStatus = async (targetUser) => {
     if (targetUser.id === currentUser?.id) {
-      setError('You cannot deactivate your own administrator account.')
+      setError('You cannot disable your own administrator account.')
       return
     }
 
@@ -60,9 +60,9 @@ export default function AdminUsers({ navigate }) {
       setUsers((prev) =>
         prev.map((u) => (u.id === targetUser.id ? { ...u, isActive: nextStatus } : u))
       )
-      setActionSuccess(`User ${targetUser.name} has been ${nextStatus ? 'activated' : 'deactivated'}.`)
+      setActionSuccess(`User ${targetUser.name} has been ${nextStatus ? 'enabled' : 'disabled'}.`)
     } catch (err) {
-      setError(err.message || 'Failed to change user status.')
+      setError(err.message || 'Failed to update account status.')
     } finally {
       setUpdatingId(null)
     }
@@ -100,7 +100,7 @@ export default function AdminUsers({ navigate }) {
             <div className="admin-breadcrumbs">Administration / Users</div>
             <h1 className="admin-page-title">User Management</h1>
             <p className="admin-page-subtitle">
-              Inspect user roles, account active statuses, and manage platform permissions.
+              Inspect user roles, account access status (enabled/disabled), and manage platform permissions.
             </p>
           </div>
           <button
@@ -159,11 +159,11 @@ export default function AdminUsers({ navigate }) {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="admin-select"
-              aria-label="Filter by status"
+              aria-label="Filter by account status"
             >
-              <option value="all">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Deactivated</option>
+              <option value="all">All Account Statuses</option>
+              <option value="active">Enabled</option>
+              <option value="inactive">Disabled</option>
             </select>
           </div>
         </div>
@@ -187,7 +187,6 @@ export default function AdminUsers({ navigate }) {
                   <tr>
                     <th>User</th>
                     <th>Role</th>
-                    <th>Status</th>
                     <th>Tasks Created</th>
                     <th>Joined</th>
                     <th className="text-right">Actions</th>
@@ -197,7 +196,7 @@ export default function AdminUsers({ navigate }) {
                   {users.map((u) => {
                     const isSelf = u.id === currentUser?.id
                     return (
-                      <tr key={u.id} className={!u.isActive ? 'user-deactivated-row' : ''}>
+                      <tr key={u.id} className={!u.isActive ? 'user-disabled-row user-deactivated-row' : ''}>
                         <td>
                           <div className="user-identity-cell">
                             <div className={`user-table-avatar ${u.role === 'ADMIN' ? 'admin' : ''}`}>
@@ -216,11 +215,7 @@ export default function AdminUsers({ navigate }) {
                             {u.role === 'ADMIN' ? '🛡 ADMIN' : 'USER'}
                           </span>
                         </td>
-                        <td>
-                          <span className={`admin-status-badge ${u.isActive ? 'active' : 'inactive'}`}>
-                            {u.isActive ? '● Active' : '○ Deactivated'}
-                          </span>
-                        </td>
+
                         <td>
                           <span className="admin-task-count-pill">
                             {u._count?.todos ?? 0} todos
@@ -237,12 +232,12 @@ export default function AdminUsers({ navigate }) {
                           <div className="admin-action-btn-group">
                             <button
                               type="button"
-                              className={`admin-table-btn ${u.isActive ? 'btn-deactivate' : 'btn-activate'}`}
+                              className={`admin-table-btn ${u.isActive ? 'btn-disable btn-deactivate' : 'btn-enable btn-activate'}`}
                               disabled={isSelf || updatingId === u.id}
                               onClick={() => handleToggleStatus(u)}
-                              title={isSelf ? 'Cannot deactivate self' : u.isActive ? 'Deactivate user' : 'Activate user'}
+                              title={isSelf ? 'Cannot disable self' : u.isActive ? 'Disable user' : 'Enable user'}
                             >
-                              {updatingId === u.id ? '…' : u.isActive ? 'Deactivate' : 'Activate'}
+                              {updatingId === u.id ? '…' : u.isActive ? 'Disable' : 'Enable'}
                             </button>
 
                             <button

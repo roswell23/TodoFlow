@@ -87,7 +87,7 @@ export const adminService = {
   },
 
   /**
-   * Activate or deactivate a user
+   * Enable or disable a user account access
    */
   async toggleUserStatus(id, isActive) {
     return await request(`/admin/users/${id}/status`, {

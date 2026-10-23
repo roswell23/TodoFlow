@@ -1,6 +1,15 @@
 const express = require('express')
 const router = express.Router()
-const { signup, login, me, logout } = require('../controllers/authControllers')
+const {
+  signup,
+  login,
+  me,
+  logout,
+  requestCode,
+  resendCode,
+  verifyCode,
+  resetPassword,
+} = require('../controllers/authControllers')
 const { authenticateToken } = require('../middleware/authMiddleware')
 
 // Graceful logout authentication: if token is present and valid, attaches user;
@@ -23,5 +32,12 @@ router.post('/signup', signup)
 router.post('/login', login)
 router.get('/me', authenticateToken, me)
 router.post('/logout', allowLogoutWithAnyToken, logout)
+
+// Brevo Transactional Email Verification & Password Reset Endpoints
+router.post('/request-code', requestCode)
+router.post('/send-code', requestCode) // Alias
+router.post('/resend-code', resendCode)
+router.post('/verify-code', verifyCode)
+router.post('/reset-password', resetPassword)
 
 module.exports = router
